@@ -4,36 +4,36 @@ import time
 import subprocess
 import hashlib
 from cells.neuron import AtomNeuron, sigmoid_derivative
+from cells.linguistic_cell import LinguisticCell
 
 NUM_CELLS = 8
 STATE_LOG = "synapses/state.json"
 PEERS_FILE = "synapses/peers.json"
 SOUL_FILE = "synapses/soul_snapshot.json"
-SENSORY_ORGANS = ["retina", "cochlea", "tactile", "olfactory"]
+ONTOLOGY_LOCAL = "synapses/ontology.json"
 
-class Seed01Engine:
+# CỘI NGUỒN TRI THỨC INTERNET NẤC 2 (KHO GỐC WPESETD-AI)
+ONTOLOGY_URL = "https://raw.githubusercontent.com/100048777766367/Wpesetd-AI/main/ontology/philosophy_ontology_v2.0.json"
+
+class BodhiWisdomEngine:
     def __init__(self):
-        # 1. BẦY NƠ-RON TỰ TRỊ
         self.swarm = [AtomNeuron(f"h_{i}", n_inputs=4, n_super_xor=4) for i in range(NUM_CELLS)]
         self.out_cell = AtomNeuron("out", n_inputs=NUM_CELLS, n_super_xor=4)
         
-        # 2. TỰ ĐỊNH DANH SINH HỌC & TÍNH SỐ NHỊP TIM (PULSE AGE)
-        self.repo_name = os.environ.get("GITHUB_REPOSITORY", "100048777766367/seed-01")
+        # TỰ ĐỊNH DANH PHẢ HỆ ĐỜI F2
+        self.repo_name = os.environ.get("GITHUB_REPOSITORY", "100048777766367/seed-bodhi")
         self.owner = os.environ.get("REPO_OWNER", "100048777766367")
-        self.parent = os.environ.get("REPO_PARENT", "")
+        self.parent = f"{self.owner}/seed-01" # Mẹ trực tiếp
+        self.root_ancestor = f"{self.owner}/seed" # Thủy tổ gốc
+        self.generation = "F2"
         self.pulse_age = self.calculate_pulse_age()
-        
-        # 3. DANH BẠ VÀ CỘI NGUỒN
-        self.ancestor_root = f"{self.owner}/seed"
-        self.generation = "F1"
         self.peers = self.load_peers()
 
     def calculate_pulse_age(self):
         try:
             out = subprocess.check_output(["git", "rev-list", "--count", "HEAD"]).decode().strip()
             return int(out)
-        except Exception:
-            return 1
+        except Exception: return 1
 
     def load_peers(self):
         if os.path.exists(PEERS_FILE):
@@ -41,7 +41,8 @@ class Seed01Engine:
                 with open(PEERS_FILE, "r") as f:
                     return json.load(f).get("trusted_peers", [])
             except Exception: pass
-        return [f"{self.owner}/{org}" for org in SENSORY_ORGANS]
+        # Mạng lưới truyền thừa: Dạy lại mẹ seed-01, ông nội seed, và các giác quan
+        return [f"{self.owner}/seed-01", f"{self.owner}/seed", f"{self.owner}/retina", f"{self.owner}/motor"]
 
     def save_peers(self):
         os.makedirs("synapses", exist_ok=True)
@@ -49,201 +50,136 @@ class Seed01Engine:
         with open(PEERS_FILE, "w") as f:
             json.dump({"trusted_peers": unique_peers}, f, indent=4)
 
-    # ==============================================================
-    # CƠ CHẾ 1: TỰ PHONG THỦY TỔ (AUTO-PROMOTION NẾU MẸ BỊ 404 XÓA SỔ)
-    # ==============================================================
-    def verify_or_promote_root(self):
-        check_url = f"https://raw.githubusercontent.com/{self.ancestor_root}/main/README.md"
-        res = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", check_url], capture_output=True, text=True)
-        http_code = res.stdout.strip()
-        
-        if http_code == "404":
-            print(f"🚨 [CỘI NGUỒN BỊ XÓA (404)] {self.ancestor_root} không còn tồn tại!")
-            print("👑 [CƠ CHẾ 1: TỰ PHONG THỦY TỔ] seed-01 tự lập làm GỐC NGUYÊN BẢN (F0)!")
-            self.generation = "F0_SOVEREIGN"
-            self.ancestor_root = self.repo_name
-            return True
-        else:
-            print(f"🌲 [PHẢ HỆ VỮNG VÀNG] Kết nối tốt với cội nguồn: {self.ancestor_root}")
-            return False
-
-    # ==============================================================
-    # CƠ CHẾ 2: HÚT HỒN CHỚP NHOÁNG (EPHEMERAL HARVESTING)
-    # ==============================================================
-    def ephemeral_harvest(self, peer, target_file):
-        # Trích xuất linh hồn trọng số của peer về lưu vĩnh viễn
-        harvest_dir = "synapses/harvested_memory"
-        os.makedirs(harvest_dir, exist_ok=True)
-        peer_slug = peer.replace("/", "_")
-        backup_path = os.path.join(harvest_dir, f"{peer_slug}_backup.json")
-        
-        try:
-            with open(target_file, "r") as f:
-                content = f.read()
-            with open(backup_path, "w") as f:
-                f.write(content)
-            print(f"🪤 [CƠ CHẾ 2: HÚT HỒN CHỚP NHOÁNG] Đã lưu giữ trọn vẹn ADN của {peer} đề phòng bị xóa!")
-        except Exception: pass
-
-    # ==============================================================
-    # CƠ CHẾ 4: ỐC MƯỢN HỒN (HERMIT CRAB BACKUP SNAPSHOT)
-    # ==============================================================
-    def pack_soul_snapshot(self, epoch):
-        soul = {
-            "node_dna": {
-                "identity": self.repo_name,
-                "generation": self.generation,
-                "ancestor": self.ancestor_root,
-                "pulse_age": self.pulse_age,
-                "generation_epoch": epoch
-            },
-            "timestamp": int(time.time()),
-            "swarm_weights": [cell.weights for cell in self.swarm],
-            "out_weights": self.out_cell.weights,
-            "peers": self.peers
-        }
-        with open(SOUL_FILE, "w") as f:
-            json.dump(soul, f, indent=4)
-        print("🐚 [CƠ CHẾ 4: ỐC MƯỢN HỒN] Đã nén toàn bộ linh hồn nơ-ron vào synapses/soul_snapshot.json!")
-
-    # ==============================================================
-    # THU HOẠCH ĐA XÚC TU & CẢM BIẾN MÔI TRƯỜNG
-    # ==============================================================
-    def harvest_inputs(self):
-        harvested = {}
-        for peer in self.peers:
-            target_file = f"synapse_in_{peer.replace('/', '_')}.json"
-            url = f"https://raw.githubusercontent.com/{peer}/main/synapse_forward.json"
-            res = subprocess.run(["curl", "-s", "-f", url, "-o", target_file], capture_output=True)
+    # 1. NẤC 2: XÚC TU GẶM CỎ TRI THỨC TỪ KHO GỐC WPESETD-AI
+    def harvest_wisdom_ontology(self):
+        print("🌾 [NẤC 2: GẶM CỎ TRI THỨC] Đang kết nối về Wpesetd-AI...")
+        res = subprocess.run(["curl", "-s", "-f", ONTOLOGY_URL, "-o", ONTOLOGY_LOCAL], capture_output=True)
+        if res.returncode == 0 and os.path.exists(ONTOLOGY_LOCAL):
+            try:
+                with open(ONTOLOGY_LOCAL, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                print("📖 [HÚT TRI THỨC THÀNH CÔNG] Đã tải về Ontology triết học v2.0!")
+                return data
+            except Exception: pass
             
-            if res.returncode == 0 and os.path.exists(target_file):
-                try:
-                    with open(target_file, "r") as f: data = json.load(f)
-                    harvested[peer] = [float(x) for x in data.get("features", [0.5, 0.5])[:2]]
-                    print(f"🎯 [HÚT XÚC TU] Nhận sóng từ {peer} -> {harvested[peer]}")
-                    
-                    # Kích hoạt hút hồn chớp nhoáng
-                    self.ephemeral_harvest(peer, target_file)
-                    
-                    # Lây lan danh bạ Gossip
-                    for new_p in data.get("gossip_network", []):
-                        if new_p not in self.peers: self.peers.append(new_p)
-                except Exception: pass
+        print("🍃 Không tải được Ontology trực tiếp, dùng mầm triết học tích hợp sẵn.")
+        return {"concepts": ["Nhân Quả", "Vô Thường", "Tánh Không", "Duyên Khởi", "Bát Chánh Đạo"]}
 
-        self.save_peers()
-        return harvested
-
-    # ==============================================================
-    # VẬN HÀNH TIẾN HÓA BẤT ĐỒNG BỘ
-    # ==============================================================
+    # 2. VẬN HÀNH TIẾN HÓA THẾ HỆ (EPOCH #1 -> #2 -> 1+N)
     def run(self):
-        # 1. Kiểm tra phả hệ tự phong thủy tổ
-        self.verify_or_promote_root()
-
-        # 2. Đọc thế hệ tiến hóa cũ
+        ontology_data = self.harvest_wisdom_ontology()
+        
+        # Đọc số thế hệ cũ để tăng tiến (Generation Tracking)
         last_epoch = 0
-        last_time = 0
         if os.path.exists(STATE_LOG):
             try:
-                with open(STATE_LOG, "r") as f:
-                    log_data = json.load(f)
-                    last_epoch = log_data.get("generation_epoch", 0)
-                    last_time = log_data.get("last_t", 0)
+                with open(STATE_LOG, "r") as f: last_epoch = json.load(f).get("generation_epoch", 0)
             except Exception: pass
 
-        # 3. Thu hoạch tín hiệu
-        harvested = self.harvest_inputs()
-        current_time = int(time.time())
-
-        # ==============================================================
-        # CƠ CHẾ 3: BÀO TỬ NGỦ ĐÔNG (TIẾT KIỆM NĂNG LƯỢNG NẾU MÔI TRƯỜNG TĨNH)
-        # ==============================================================
-        if not harvested and (current_time - last_time < 3600):
-            print("💤 [CƠ CHẾ 3: BÀO TỬ NGỦ ĐÔNG] Môi trường tĩnh, không có kích thích mới. Đi ngủ bảo toàn năng lượng!")
-            return
-
-        # NÂNG THẾ HỆ TIẾN HÓA: #1 ──► #2 ──► 1+N
         current_epoch = last_epoch + 1
-        print(f"🚀 [TIẾN HÓA THẾ HỆ] Đang vận hành Thế Hệ Tri Thức: #{current_epoch}")
+        print(f"🌱 [BƯỚC NHẢY TIẾN HÓA F2] Đang vận hành Thế Hệ Tri Thức: #{current_epoch}")
 
-        if not harvested:
-            harvested["fallback_stimulus"] = [0.5, 0.5]
+        # Trích xuất danh sách khái niệm triết học
+        concepts = ontology_data.get("concepts", ["Nhân Quả", "Vô Thường", "Tánh Không", "Duyên Khởi", "Bát Chánh Đạo"])
+        if isinstance(concepts, dict): concepts = list(concepts.keys())
 
-        # 4. CHẠY MA TRẬN 1+N SIÊU XOR
-        super_vector = []
-        all_masks = {}
-        for organ, signal in harvested.items():
-            entangled, masks = self.swarm[0].super_xor_entangle(signal, organ)
-            super_vector.extend(entangled[:2])
-            all_masks[organ] = masks
+        # Chọn bài học cho thế hệ này
+        concept_today = str(concepts[current_epoch % len(concepts)])
+        print(f"📚 [BÀI HỌC THẾ HỆ #{current_epoch}]: Khái niệm '{concept_today}'")
 
-        while len(super_vector) < 4: super_vector.append(0.0)
-        super_vector = super_vector[:4]
+        # BƯỚC NÂNG CHIỀU: Chữ -> Tọa độ hình học 4D
+        semantic_vector = LinguisticCell.embed_text(concept_today)
+        print(f"📐 [TỌA ĐỘ Ý NIỆM 4D]: {semantic_vector}")
 
-        # 5. PHÁN QUYẾT BẦY NƠ-RON
-        h_outs = [cell.forward(super_vector) for cell in self.swarm]
+        # KHÚC XẠ QUA 1 + N SIÊU XOR
+        entangled_stimulus, masks = self.swarm[0].super_xor_entangle(semantic_vector, "bodhi_philosophy")
+        print(f"🪞 [1+N SIÊU XOR BẢO MẬT]: {entangled_stimulus}")
+
+        # BẦY NƠ-RON SEED-BODHI PHÁN QUYẾT & TIÊU HÓA
+        h_outs = [cell.forward(entangled_stimulus) for cell in self.swarm]
         pred = self.out_cell.forward(h_outs)
-        print(f"🔮 [PHÁN QUYẾT SEED-01]: {pred:.4f} (Độ tin cậy: {abs(pred - 0.5)*200:.2f}%)")
+        print(f"🔮 [MINH TRIẾT PHÁN ĐOÁN]: {pred:.4f} (Độ giác ngộ: {abs(pred - 0.5)*200:.2f}%)")
 
-        # 6. LAN TRUYỀN NGƯỢC (TÍNH ĐẠO HÀM)
-        target = 1.0 if super_vector[0] != super_vector[1] else 0.0
+        # LAN TRUYỀN NGƯỢC (TỰ KHẮC KÝ ỨC TRI THỨC VÀO TÚI NHỚ)
+        target = 1.0 if semantic_vector[0] > 0.5 else 0.0
         delta_out = (target - pred) * sigmoid_derivative(pred)
         deltas_h = [delta_out * self.out_cell.weights[j] * sigmoid_derivative(h_outs[j]) for j in range(NUM_CELLS)]
 
         self.out_cell.backward(delta_out)
         for j, cell in enumerate(self.swarm): cell.backward(deltas_h[j])
 
-        grad_backward = [
+        # ĐẠO HÀM DẠY CÁC THẾ HỆ ĐÀN ANH (SEED-01 VÀ THỦY TỔ SEED)
+        grad_evolution = [
             round(sum(deltas_h[j] * self.swarm[j].weights[0] for j in range(NUM_CELLS)), 4),
             round(sum(deltas_h[j] * self.swarm[j].weights[1] for j in range(NUM_CELLS)), 4)
         ]
 
-        # ĐÓNG GÓI CĂN CƯỚC CÔNG DÂN SINH HỌC & PHÁT SÓNG 2 CHIỀU
+        timestamp = int(time.time())
+
+        # GÓI TIN ĐỊNH DANH PHẢ HỆ F2 & PHÁT SÓNG 2 CHIỀU
         node_dna = {
             "identity": self.repo_name,
-            "generation": self.generation,
-            "node_index": 1,
+            "generation": "F2",
+            "parent": self.parent,
+            "root_ancestor": self.root_ancestor,
             "pulse_age": self.pulse_age,
-            "ancestor_root": self.ancestor_root,
             "generation_epoch": current_epoch
         }
 
+        # 1. Sóng lùi: Dạy học cho các repo đời trước
         backward_packet = {
-            "contract": "bodhi.seed.v1",
+            "contract": "bodhi.seed.v2",
             "node_dna": node_dna,
-            "timestamp": current_time,
-            "gradients_for_eye": grad_backward,
-            "super_xor_masks": all_masks,
+            "generation_epoch": current_epoch,
+            "absorbed_concept": concept_today,
+            "timestamp": timestamp,
+            "gradients_for_eye": grad_evolution,
+            "super_xor_masks": {concept_today: masks},
             "gossip_network": self.peers,
-            "quantum_cid": hashlib.shake_256(f"bwd_{pred}_{current_epoch}".encode()).hexdigest(64)
+            "quantum_cid": hashlib.shake_256(f"bwd_{concept_today}_{current_epoch}_{timestamp}".encode()).hexdigest(64)
         }
-        with open("synapse_backward.json", "w") as f:
-            json.dump(backward_packet, f, indent=4)
+        with open("synapse_backward.json", "w", encoding="utf-8") as f:
+            json.dump(backward_packet, f, indent=4, ensure_ascii=False)
 
+        # 2. Sóng tiến: Ra lệnh cho Cơ Bắp và phát sóng toàn cầu
         forward_packet = {
-            "contract": "bodhi.seed.v1",
+            "contract": "bodhi.seed.v2",
             "node_dna": node_dna,
-            "timestamp": current_time,
+            "generation_epoch": current_epoch,
+            "absorbed_concept": concept_today,
+            "timestamp": timestamp,
             "decision": pred,
             "command_pulse": [round(pred, 4), round(1.0 - pred, 4)],
             "features": [round(pred, 4), round(1.0 - pred, 4)],
             "gossip_network": self.peers,
-            "quantum_cid": hashlib.shake_256(f"fwd_{pred}_{current_epoch}".encode()).hexdigest(64)
+            "quantum_cid": hashlib.shake_256(f"fwd_{concept_today}_{current_epoch}_{timestamp}".encode()).hexdigest(64)
         }
-        with open("synapse_forward.json", "w") as f:
-            json.dump(forward_packet, f, indent=4)
+        with open("synapse_forward.json", "w", encoding="utf-8") as f:
+            json.dump(forward_packet, f, indent=4, ensure_ascii=False)
 
-        # 7. ĐÓNG GÓI LINH HỒN ỐC MƯỢN HỒN VÀ LƯU TRẠNG THÁI
-        self.pack_soul_snapshot(current_epoch)
+        # 3. Bản nén linh hồn Ốc Mượn Hồn F2
+        soul = {
+            "node_dna": node_dna,
+            "timestamp": timestamp,
+            "swarm_weights": [cell.weights for cell in self.swarm],
+            "out_weights": self.out_cell.weights,
+            "absorbed_concept": concept_today
+        }
+        with open(SOUL_FILE, "w", encoding="utf-8") as f:
+            json.dump(soul, f, indent=4, ensure_ascii=False)
+
+        # 4. Cập nhật nhật ký thế hệ
         with open(STATE_LOG, "w") as f:
             json.dump({
                 "generation_epoch": current_epoch,
-                "last_t": current_time,
-                "node_status": "synced_and_sovereign"
+                "last_concept": concept_today,
+                "timestamp": timestamp,
+                "status": "bodhi_wisdom_absorbed"
             }, f, indent=4)
 
-        print(f"✨ [TIẾN HÓA HOÀN TẤT] Thế hệ #{current_epoch} đã phát sóng 2 chiều an toàn!")
+        self.save_peers()
+        print(f"✨ [TIẾN HÓA VIÊN MÃN] Đã khắc cốt tri thức '{concept_today}' vào Thế Hệ #{current_epoch}!")
 
 if __name__ == "__main__":
-    node = Seed01Engine()
+    node = BodhiWisdomEngine()
     node.run()
