@@ -6,17 +6,17 @@
         "parent": "100048777766367/seed-01",
         "root_ancestor": "100048777766367/seed",
         "pulse_age": 1,
-        "generation_epoch": 128
+        "generation_epoch": 129
     },
-    "generation_epoch": 128,
-    "absorbed_concept": "Duyên Khởi",
-    "timestamp": 1795225209,
+    "generation_epoch": 129,
+    "absorbed_concept": "Bát Chánh Đạo",
+    "timestamp": 1795265712,
     "gradients_for_eye": [
-        -0.002,
-        -0.0007
+        -0.0013,
+        -0.0003
     ],
     "super_xor_masks": {
-        "Duyên Khởi": [
+        "Bát Chánh Đạo": [
             11773.3782,
             9983.1254,
             47544.8811,
@@ -29,5 +29,5 @@
         "100048777766367/tactile",
         "100048777766367/olfactory"
     ],
-    "quantum_cid": "8b5faa7e5aacdc7845a90184276a884e8440717e032ec45d66bf70a4c5889eae33bd8e71ab87a7c872af73e191d5e2e22be506d78bf58cf2af9f71a9fc70f823"
+    "quantum_cid": "b82551f9a4e71e4d02f9649b011254bdb98ebd4d32e221b5ccf99f78f98a084c1bf6853ab526a7ecf8266867d16063414bf87772ced1c50d0de0a03e430e1c47"
 }
